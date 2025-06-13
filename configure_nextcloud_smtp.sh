@@ -42,8 +42,11 @@ echo
 DEFAULT_SMTP_PORT="587"
 DEFAULT_SMTP_SECURITY="tls"
 DEFAULT_FROM_NAME="Nextcloud Server"
+DEFAULT_SMTP_SERVER="localhost"
 
-read -p "SMTP Server (e.g. smtp.gmail.com): " SMTP_HOST
+read -p "SMTP Server (e.g. smtp.gmail.com) [$DEFAULT_SMTP_SERVER]: " SMTP_HOST
+SMTP_HOST=${SMTP_HOST:-$DEFAULT_SMTP_SERVER}
+
 read -p "SMTP Port [$DEFAULT_SMTP_PORT]: " SMTP_PORT
 SMTP_PORT=${SMTP_PORT:-$DEFAULT_SMTP_PORT}
 
