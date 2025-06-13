@@ -102,7 +102,7 @@ if [[ "$AUTH_REQUIRED" == "y" || "$AUTH_REQUIRED" == "Y" ]]; then
 php occ config:system:set mail_smtpmode --value="smtp"
 php occ config:system:set mail_smtphost --value="$SMTP_HOST"
 php occ config:system:set mail_smtpport --value="$SMTP_PORT" --type=integer
-php occ config:system:set mail_smtpauth --value=1 --type=boolean
+php occ config:system:set mail_smtpauth --value=true --type=boolean
 php occ config:system:set mail_smtpname --value="$SMTP_USER"
 php occ config:system:set mail_smtppassword --value="$SMTP_PASSWORD"
 php occ config:system:set mail_smtpsecure --value="$SMTP_SECURITY"
@@ -114,7 +114,7 @@ else
 php occ config:system:set mail_smtpmode --value="smtp"
 php occ config:system:set mail_smtphost --value="$SMTP_HOST"
 php occ config:system:set mail_smtpport --value="$SMTP_PORT" --type=integer
-php occ config:system:set mail_smtpauth --value=0 --type=boolean
+php occ config:system:set mail_smtpauth --value=false --type=boolean
 php occ config:system:set mail_smtpsecure --value="$SMTP_SECURITY"
 php occ config:system:set mail_from_address --value="$FROM_EMAIL"
 php occ config:system:set mail_domain --value="$MAIL_DOMAIN"
@@ -144,7 +144,9 @@ if [[ "$TEST_MAIL" == "y" || "$TEST_MAIL" == "Y" ]]; then
 php occ config:system:set mail_smtpmode --value="smtp"
 php -r '
 require_once("/var/www/nextcloud/lib/base.php");
-\$mailer = \OC::getMailer();
+require_once("/var/www/nextcloud/lib/private/Server.php");
+\$server = new \OC\Server(\OC::$CONFIG);
+\$mailer = \$server->getMailer();
 \$message = \$mailer->createMessage();
 \$message->setSubject("Nextcloud SMTP Test");
 \$message->setFrom(["$FROM_EMAIL" => "$FROM_NAME"]);
