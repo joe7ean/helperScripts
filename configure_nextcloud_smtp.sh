@@ -54,8 +54,8 @@ read -p "SMTP Security (tls/ssl) [$DEFAULT_SMTP_SECURITY]: " SMTP_SECURITY
 SMTP_SECURITY=${SMTP_SECURITY:-$DEFAULT_SMTP_SECURITY}
 
 # Ask if authentication is required
-read -p "Is SMTP authentication required? (Y/n): " AUTH_REQUIRED
-AUTH_REQUIRED=${AUTH_REQUIRED:-Y}
+read -p "Is SMTP authentication required? (y/N): " AUTH_REQUIRED
+AUTH_REQUIRED=${AUTH_REQUIRED:-N}
 
 if [[ "$AUTH_REQUIRED" == "y" || "$AUTH_REQUIRED" == "Y" ]]; then
     read -p "SMTP Username/Email: " SMTP_USER
