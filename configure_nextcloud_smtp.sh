@@ -38,20 +38,50 @@ fi
 echo -e "${YELLOW}Please enter your SMTP configuration:${NC}"
 echo
 
+# Default values
+DEFAULT_SMTP_PORT="587"
+DEFAULT_SMTP_SECURITY="tls"
+DEFAULT_FROM_NAME="Nextcloud Server"
+
 read -p "SMTP Server (e.g. smtp.gmail.com): " SMTP_HOST
-read -p "SMTP Port (e.g. 587 for TLS, 465 for SSL): " SMTP_PORT
-read -p "SMTP Security (tls/ssl): " SMTP_SECURITY
-read -p "SMTP Username/Email: " SMTP_USER
-read -s -p "SMTP Password: " SMTP_PASSWORD
-echo
+read -p "SMTP Port [$DEFAULT_SMTP_PORT]: " SMTP_PORT
+SMTP_PORT=${SMTP_PORT:-$DEFAULT_SMTP_PORT}
+
+read -p "SMTP Security (tls/ssl) [$DEFAULT_SMTP_SECURITY]: " SMTP_SECURITY
+SMTP_SECURITY=${SMTP_SECURITY:-$DEFAULT_SMTP_SECURITY}
+
+# Ask if authentication is required
+read -p "Is SMTP authentication required? (Y/n): " AUTH_REQUIRED
+AUTH_REQUIRED=${AUTH_REQUIRED:-Y}
+
+if [[ "$AUTH_REQUIRED" == "y" || "$AUTH_REQUIRED" == "Y" ]]; then
+    read -p "SMTP Username/Email: " SMTP_USER
+    read -s -p "SMTP Password: " SMTP_PASSWORD
+    echo
+else
+    SMTP_USER=""
+    SMTP_PASSWORD=""
+fi
+
 read -p "Sender Email (e.g. nextcloud@domain.tld): " FROM_EMAIL
-read -p "Sender Name (e.g. Nextcloud Server): " FROM_NAME
+read -p "Sender Name [$DEFAULT_FROM_NAME]: " FROM_NAME
+FROM_NAME=${FROM_NAME:-$DEFAULT_FROM_NAME}
+
+# Extract domain from FROM_EMAIL
+MAIL_DOMAIN=$(echo "$FROM_EMAIL" | cut -d'@' -f2)
 echo
 
 # Validation
-if [[ -z "$SMTP_HOST" || -z "$SMTP_PORT" || -z "$SMTP_USER" || -z "$SMTP_PASSWORD" ]]; then
-    echo -e "${RED}Error: Required fields cannot be empty${NC}"
+if [[ -z "$SMTP_HOST" || -z "$SMTP_PORT" ]]; then
+    echo -e "${RED}Error: SMTP host and port cannot be empty${NC}"
     exit 1
+fi
+
+if [[ "$AUTH_REQUIRED" == "y" || "$AUTH_REQUIRED" == "Y" ]]; then
+    if [[ -z "$SMTP_USER" || -z "$SMTP_PASSWORD" ]]; then
+        echo -e "${RED}Error: Username and password are required when authentication is enabled${NC}"
+        exit 1
+    fi
 fi
 
 # Backup current configuration
@@ -64,7 +94,8 @@ echo
 # Set SMTP configuration
 echo -e "${BLUE}Setting SMTP configuration...${NC}"
 
-yunohost app shell nextcloud << EOF
+if [[ "$AUTH_REQUIRED" == "y" || "$AUTH_REQUIRED" == "Y" ]]; then
+    yunohost app shell nextcloud << EOF
 php occ config:system:set mail_smtpmode --value="smtp"
 php occ config:system:set mail_smtphost --value="$SMTP_HOST"
 php occ config:system:set mail_smtpport --value="$SMTP_PORT" --type=integer
@@ -73,8 +104,19 @@ php occ config:system:set mail_smtpname --value="$SMTP_USER"
 php occ config:system:set mail_smtppassword --value="$SMTP_PASSWORD"
 php occ config:system:set mail_smtpsecure --value="$SMTP_SECURITY"
 php occ config:system:set mail_from_address --value="$FROM_EMAIL"
-php occ config:system:set mail_domain --value="$(echo $FROM_EMAIL | cut -d'@' -f2)"
+php occ config:system:set mail_domain --value="$MAIL_DOMAIN"
 EOF
+else
+    yunohost app shell nextcloud << EOF
+php occ config:system:set mail_smtpmode --value="smtp"
+php occ config:system:set mail_smtphost --value="$SMTP_HOST"
+php occ config:system:set mail_smtpport --value="$SMTP_PORT" --type=integer
+php occ config:system:set mail_smtpauth --value="0" --type=boolean
+php occ config:system:set mail_smtpsecure --value="$SMTP_SECURITY"
+php occ config:system:set mail_from_address --value="$FROM_EMAIL"
+php occ config:system:set mail_domain --value="$MAIL_DOMAIN"
+EOF
+fi
 
 # Additional mail settings (optional)
 if [[ -n "$FROM_NAME" ]]; then
@@ -87,8 +129,9 @@ echo -e "${GREEN}SMTP configuration successfully set!${NC}"
 echo
 
 # Send test mail (optional)
-echo -e "${YELLOW}Do you want to send a test mail? (y/n)${NC}"
+echo -e "${YELLOW}Do you want to send a test mail? (Y/n)${NC}"
 read -p "Answer: " TEST_MAIL
+TEST_MAIL=${TEST_MAIL:-Y}
 
 if [[ "$TEST_MAIL" == "y" || "$TEST_MAIL" == "Y" ]]; then
     read -p "Send test mail to: " TEST_RECIPIENT

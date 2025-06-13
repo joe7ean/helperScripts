@@ -34,18 +34,41 @@ if ! yunohost app list | grep -q "nextcloud"; then
     exit 1
 fi
 
-# Eingabe der SMTP-Daten
-echo -e "${YELLOW}Bitte gib deine SMTP-Konfiguration ein:${NC}"
+# Input SMTP data
+echo -e "${YELLOW}Bitte geben Sie Ihre SMTP-Konfiguration ein:${NC}"
 echo
 
-read -p "SMTP Server (z.B. smtp.gmail.com): " SMTP_HOST
-read -p "SMTP Port (z.B. 587 für TLS, 465 für SSL): " SMTP_PORT
-read -p "SMTP Sicherheit (tls/ssl): " SMTP_SECURITY
-read -p "SMTP Benutzername/E-Mail: " SMTP_USER
-read -s -p "SMTP Passwort: " SMTP_PASSWORD
-echo
-read -p "Absender E-Mail (z.B. nextcloud@domain.tld): " FROM_EMAIL
-read -p "Absender Name (z.B. Nextcloud Server): " FROM_NAME
+# Default values
+DEFAULT_SMTP_PORT="587"
+DEFAULT_SMTP_SECURITY="tls"
+DEFAULT_FROM_NAME="Nextcloud Server"
+
+read -p "SMTP-Server (z.B. smtp.gmail.com): " SMTP_HOST
+read -p "SMTP-Port [$DEFAULT_SMTP_PORT]: " SMTP_PORT
+SMTP_PORT=${SMTP_PORT:-$DEFAULT_SMTP_PORT}
+
+read -p "SMTP-Sicherheit (tls/ssl) [$DEFAULT_SMTP_SECURITY]: " SMTP_SECURITY
+SMTP_SECURITY=${SMTP_SECURITY:-$DEFAULT_SMTP_SECURITY}
+
+# Ask if authentication is required
+read -p "Ist SMTP-Authentifizierung erforderlich? (J/n): " AUTH_REQUIRED
+AUTH_REQUIRED=${AUTH_REQUIRED:-J}
+
+if [[ "$AUTH_REQUIRED" == "j" || "$AUTH_REQUIRED" == "J" ]]; then
+    read -p "SMTP-Benutzername/E-Mail: " SMTP_USER
+    read -s -p "SMTP-Passwort: " SMTP_PASSWORD
+    echo
+else
+    SMTP_USER=""
+    SMTP_PASSWORD=""
+fi
+
+read -p "Absender-E-Mail (z.B. nextcloud@domain.tld): " FROM_EMAIL
+read -p "Absender-Name [$DEFAULT_FROM_NAME]: " FROM_NAME
+FROM_NAME=${FROM_NAME:-$DEFAULT_FROM_NAME}
+
+# Extract domain from FROM_EMAIL
+MAIL_DOMAIN=$(echo "$FROM_EMAIL" | cut -d'@' -f2)
 echo
 
 # Validierung
@@ -61,10 +84,11 @@ cp /var/www/nextcloud/config/config.php "$BACKUP_FILE"
 echo -e "${GREEN}Backup erstellt: $BACKUP_FILE${NC}"
 echo
 
-# SMTP Konfiguration setzen
-echo -e "${BLUE}Setze SMTP Konfiguration...${NC}"
+# Set SMTP configuration
+echo -e "${BLUE}SMTP-Konfiguration wird gesetzt...${NC}"
 
-yunohost app shell nextcloud << EOF
+if [[ "$AUTH_REQUIRED" == "j" || "$AUTH_REQUIRED" == "J" ]]; then
+    yunohost app shell nextcloud << EOF
 php occ config:system:set mail_smtpmode --value="smtp"
 php occ config:system:set mail_smtphost --value="$SMTP_HOST"
 php occ config:system:set mail_smtpport --value="$SMTP_PORT" --type=integer
@@ -73,8 +97,19 @@ php occ config:system:set mail_smtpname --value="$SMTP_USER"
 php occ config:system:set mail_smtppassword --value="$SMTP_PASSWORD"
 php occ config:system:set mail_smtpsecure --value="$SMTP_SECURITY"
 php occ config:system:set mail_from_address --value="$FROM_EMAIL"
-php occ config:system:set mail_domain --value="$(echo $FROM_EMAIL | cut -d'@' -f2)"
+php occ config:system:set mail_domain --value="$MAIL_DOMAIN"
 EOF
+else
+    yunohost app shell nextcloud << EOF
+php occ config:system:set mail_smtpmode --value="smtp"
+php occ config:system:set mail_smtphost --value="$SMTP_HOST"
+php occ config:system:set mail_smtpport --value="$SMTP_PORT" --type=integer
+php occ config:system:set mail_smtpauth --value="0" --type=boolean
+php occ config:system:set mail_smtpsecure --value="$SMTP_SECURITY"
+php occ config:system:set mail_from_address --value="$FROM_EMAIL"
+php occ config:system:set mail_domain --value="$MAIL_DOMAIN"
+EOF
+fi
 
 # Zusätzliche Mail-Einstellungen (optional)
 if [[ -n "$FROM_NAME" ]]; then
@@ -86,14 +121,15 @@ fi
 echo -e "${GREEN}SMTP Konfiguration erfolgreich gesetzt!${NC}"
 echo
 
-# Test-Mail senden (optional)
-echo -e "${YELLOW}Möchtest du eine Test-Mail senden? (j/n)${NC}"
+# Send test mail (optional)
+echo -e "${YELLOW}Möchten Sie eine Test-E-Mail senden? (J/n)${NC}"
 read -p "Antwort: " TEST_MAIL
+TEST_MAIL=${TEST_MAIL:-J}
 
 if [[ "$TEST_MAIL" == "j" || "$TEST_MAIL" == "J" ]]; then
-    read -p "Test-Mail senden an: " TEST_RECIPIENT
+    read -p "Test-E-Mail senden an: " TEST_RECIPIENT
     if [[ -n "$TEST_RECIPIENT" ]]; then
-        echo -e "${BLUE}Sende Test-Mail...${NC}"
+        echo -e "${BLUE}Test-E-Mail wird gesendet...${NC}"
         yunohost app shell nextcloud << EOF
 php occ config:system:set mail_smtpmode --value="smtp"
 php -r "
