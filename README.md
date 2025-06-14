@@ -1,45 +1,68 @@
 # Nextcloud SMTP Configuration Helper Scripts
 
-> ⚠️ **WARNING: ALPHA VERSION** ⚠️
+> 🚧 **BETA VERSION** 🚧
 > 
-> This project is currently in alpha stage and work in progress. Use at your own risk.
-> Some features might not work as expected and the configuration might need manual adjustments.
+> This project is currently in beta stage. While the basic functionality is working,
+> some features might need manual adjustments. Please report any issues you encounter.
 
-This repository contains helper scripts for configuring SMTP settings in Nextcloud instances.
+This repository contains helper scripts for configuring SMTP settings in Nextcloud instances. The scripts are designed to work with YunoHost installations but might work with other Nextcloud setups as well.
 
-## Available Scripts
+## Features
+
+- Simple SMTP configuration through command line
+- Support for both authenticated and non-authenticated SMTP servers
+- Default configuration for local SMTP servers
+- Configuration backup and restore functionality
+
+## Available Script
 
 ### `configure_nextcloud_smtp.sh`
-A shell script to configure SMTP settings for Nextcloud. This script helps automate the process of setting up email notifications in your Nextcloud instance.
-
-### `konfiguriere_nextcloud_smtp.sh`
-German version of the SMTP configuration script.
+A shell script to configure SMTP settings for Nextcloud.
 
 ## Usage
-
-To use the configuration script:
 
 1. Make the script executable:
    ```bash
    chmod +x configure_nextcloud_smtp.sh
    ```
 
-2. Run the script:
+2. Run the script as root:
    ```bash
-   ./configure_nextcloud_smtp.sh
+   sudo ./configure_nextcloud_smtp.sh
    ```
+
+3. Follow the interactive prompts to configure your SMTP settings.
+
+## Default Values
+
+- SMTP Server: localhost
+- SMTP Port: 587
+- SMTP Security: tls
+- Authentication: disabled by default
+- Sender Name: "Nextcloud Server"
 
 ## Requirements
 
 - A running Nextcloud instance
 - Shell access to the server
-- Appropriate permissions to modify Nextcloud configuration
+- Root privileges
+- YunoHost (recommended)
 
-## Known Issues
+## Known Limitations
 
-- Boolean configuration values might need manual adjustment
-- Test mail functionality might not work in all environments
-- Some Nextcloud versions might require additional configuration
+- Test mail functionality is limited to configuration verification
+- Some Nextcloud versions might require additional manual configuration
+- Boolean configuration values might need manual adjustment in some cases
+
+## Backup and Restore
+
+The script automatically creates a backup of your Nextcloud configuration before making changes. You can restore the previous configuration using:
+
+```bash
+sudo cp /var/www/nextcloud/config/config.php.backup.[TIMESTAMP] /var/www/nextcloud/config/config.php
+```
+
+A restore script is also created at `/tmp/restore_nextcloud_smtp.sh`.
 
 ## License
 
@@ -47,4 +70,4 @@ This project is open source and available under the MIT License.
 
 ## Contributing
 
-Feel free to submit issues and enhancement requests! Since this is a work in progress, your feedback and contributions are especially valuable. 
+Your feedback and contributions are welcome! Please report any issues you encounter and feel free to submit pull requests for improvements. 
