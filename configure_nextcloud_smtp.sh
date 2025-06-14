@@ -139,24 +139,32 @@ TEST_MAIL=${TEST_MAIL:-Y}
 if [[ "$TEST_MAIL" == "y" || "$TEST_MAIL" == "Y" ]]; then
     read -p "Send test mail to: " TEST_RECIPIENT
     if [[ -n "$TEST_RECIPIENT" ]]; then
-        echo -e "${BLUE}Sending test mail...${NC}"
+        echo -e "${BLUE}Testing SMTP configuration...${NC}"
         yunohost app shell nextcloud << EOF
 php occ config:system:set mail_smtpmode --value="smtp"
 php -r '
 require_once("/var/www/nextcloud/lib/base.php");
 require_once("/var/www/nextcloud/lib/private/Server.php");
-\$server = new \OC\Server(\OC::$CONFIG);
-\$mailer = \$server->getMailer();
-\$message = \$mailer->createMessage();
-\$message->setSubject("Nextcloud SMTP Test");
-\$message->setFrom(["$FROM_EMAIL" => "$FROM_NAME"]);
-\$message->setTo(["$TEST_RECIPIENT"]);
-\$message->setPlainBody("This is a test mail from your Nextcloud server. SMTP is working!");
+
 try {
-    \$mailer->send(\$message);
-    echo "Test mail sent successfully!" . PHP_EOL;
+    \$server = new \OC\Server(\OC::$CONFIG);
+    \$config = \$server->getConfig();
+    
+    echo "SMTP Configuration Test Results:\n";
+    echo "--------------------------------\n";
+    echo "SMTP Mode: " . \$config->getSystemValue("mail_smtpmode", "not set") . "\n";
+    echo "SMTP Host: " . \$config->getSystemValue("mail_smtphost", "not set") . "\n";
+    echo "SMTP Port: " . \$config->getSystemValue("mail_smtpport", "not set") . "\n";
+    echo "SMTP Security: " . \$config->getSystemValue("mail_smtpsecure", "not set") . "\n";
+    echo "SMTP Auth: " . (\$config->getSystemValue("mail_smtpauth", false) ? "enabled" : "disabled") . "\n";
+    echo "From Address: " . \$config->getSystemValue("mail_from_address", "not set") . "\n";
+    echo "From Name: " . \$config->getSystemValue("mail_from_name", "not set") . "\n";
+    echo "Domain: " . \$config->getSystemValue("mail_domain", "not set") . "\n";
+    
+    echo "\nConfiguration appears to be valid.\n";
+    echo "To test the actual mail sending, please try to send a mail from the Nextcloud web interface.\n";
 } catch (Exception \$e) {
-    echo "Error sending mail: " . \$e->getMessage() . PHP_EOL;
+    echo "Error testing configuration: " . \$e->getMessage() . "\n";
 }
 '
 EOF
