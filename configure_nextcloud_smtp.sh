@@ -34,6 +34,14 @@ if ! yunohost app list | grep -q "nextcloud"; then
     exit 1
 fi
 
+# Get YunoHost domain
+echo -e "${YELLOW}Please enter your YunoHost domain:${NC}"
+read -p "Domain (e.g. domain.tld): " YUNOHOST_DOMAIN
+if [[ -z "$YUNOHOST_DOMAIN" ]]; then
+    echo -e "${RED}Error: Domain cannot be empty${NC}"
+    exit 1
+fi
+
 # Input SMTP data
 echo -e "${YELLOW}Please enter your SMTP configuration:${NC}"
 echo
@@ -43,6 +51,7 @@ DEFAULT_SMTP_PORT="587"
 DEFAULT_SMTP_SECURITY="tls"
 DEFAULT_FROM_NAME="Nextcloud Server"
 DEFAULT_SMTP_SERVER="localhost"
+DEFAULT_FROM_EMAIL="nextcloud@$YUNOHOST_DOMAIN"
 
 read -p "SMTP Server (e.g. smtp.gmail.com) [$DEFAULT_SMTP_SERVER]: " SMTP_HOST
 SMTP_HOST=${SMTP_HOST:-$DEFAULT_SMTP_SERVER}
@@ -66,7 +75,9 @@ else
     SMTP_PASSWORD=""
 fi
 
-read -p "Sender Email (e.g. nextcloud@domain.tld): " FROM_EMAIL
+read -p "Sender Email [$DEFAULT_FROM_EMAIL]: " FROM_EMAIL
+FROM_EMAIL=${FROM_EMAIL:-$DEFAULT_FROM_EMAIL}
+
 read -p "Sender Name [$DEFAULT_FROM_NAME]: " FROM_NAME
 FROM_NAME=${FROM_NAME:-$DEFAULT_FROM_NAME}
 
