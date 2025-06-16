@@ -172,6 +172,26 @@ try {
     echo "From Name: " . \$config->getSystemValue("mail_from_name", "not set") . "\n";
     echo "Domain: " . \$config->getSystemValue("mail_domain", "not set") . "\n";
     
+<<<<<<< HEAD
+=======
+    // Test mail sending
+    \$mailer = \$server->getMailer();
+    \$message = \$mailer->createMessage();
+    \$message->setSubject("Nextcloud SMTP Test");
+    \$fromAddress = \$config->getSystemValue("mail_from_address");
+    \$fromName = \$config->getSystemValue("mail_from_name");
+    \$message->setFrom([\$fromAddress => \$fromName]);
+    \$message->setTo(["$TEST_RECIPIENT"]);
+    \$message->setPlainBody("This is a test mail from your Nextcloud server. SMTP is working!");
+    
+    try {
+        \$mailer->send(\$message);
+        echo "\nTest mail sent successfully!\n";
+    } catch (Exception \$e) {
+        echo "\nError sending test mail: " . \$e->getMessage() . "\n";
+    }
+    
+>>>>>>> d14fc32f931a3d50c4d9a08de3d87f14cb322b2e
     echo "\nConfiguration appears to be valid.\n";
     echo "To test the actual mail sending, please try to send a mail from the Nextcloud web interface.\n";
     echo "You can test this by:\n";
