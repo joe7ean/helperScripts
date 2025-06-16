@@ -176,7 +176,9 @@ try {
     \$mailer = \$server->getMailer();
     \$message = \$mailer->createMessage();
     \$message->setSubject("Nextcloud SMTP Test");
-    \$message->setFrom([\$config->getSystemValue("mail_from_address") => \$config->getSystemValue("mail_from_name")]);
+    \$fromAddress = \$config->getSystemValue("mail_from_address");
+    \$fromName = \$config->getSystemValue("mail_from_name");
+    \$message->setFrom([\$fromAddress => \$fromName]);
     \$message->setTo(["$TEST_RECIPIENT"]);
     \$message->setPlainBody("This is a test mail from your Nextcloud server. SMTP is working!");
     
