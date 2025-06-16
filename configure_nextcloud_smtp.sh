@@ -143,16 +143,13 @@ echo -e "${GREEN}SMTP configuration successfully set!${NC}"
 echo
 
 # Send test mail (optional)
-echo -e "${YELLOW}Do you want to send a test mail? (Y/n)${NC}"
+echo -e "${YELLOW}Do you want to verify the SMTP configuration? (Y/n)${NC}"
 read -p "Answer: " TEST_MAIL
 TEST_MAIL=${TEST_MAIL:-Y}
 
 if [[ "$TEST_MAIL" == "y" || "$TEST_MAIL" == "Y" ]]; then
-    read -p "Send test mail to: " TEST_RECIPIENT
-    if [[ -n "$TEST_RECIPIENT" ]]; then
-        echo -e "${BLUE}Testing SMTP configuration...${NC}"
-        yunohost app shell nextcloud << EOF
-php occ config:system:set mail_smtpmode --value="smtp"
+    echo -e "${BLUE}Checking SMTP configuration...${NC}"
+    yunohost app shell nextcloud << EOF
 php -r '
 require_once("/var/www/nextcloud/lib/base.php");
 require_once("/var/www/nextcloud/lib/private/Server.php");
@@ -161,8 +158,8 @@ try {
     \$server = new \OC\Server(\OC::$CONFIG);
     \$config = \$server->getConfig();
     
-    echo "SMTP Configuration Test Results:\n";
-    echo "--------------------------------\n";
+    echo "SMTP Configuration Status:\n";
+    echo "-------------------------\n";
     echo "SMTP Mode: " . \$config->getSystemValue("mail_smtpmode", "not set") . "\n";
     echo "SMTP Host: " . \$config->getSystemValue("mail_smtphost", "not set") . "\n";
     echo "SMTP Port: " . \$config->getSystemValue("mail_smtpport", "not set") . "\n";
@@ -172,40 +169,18 @@ try {
     echo "From Name: " . \$config->getSystemValue("mail_from_name", "not set") . "\n";
     echo "Domain: " . \$config->getSystemValue("mail_domain", "not set") . "\n";
     
-<<<<<<< HEAD
-=======
-    // Test mail sending
-    \$mailer = \$server->getMailer();
-    \$message = \$mailer->createMessage();
-    \$message->setSubject("Nextcloud SMTP Test");
-    \$fromAddress = \$config->getSystemValue("mail_from_address");
-    \$fromName = \$config->getSystemValue("mail_from_name");
-    \$message->setFrom([\$fromAddress => \$fromName]);
-    \$message->setTo(["$TEST_RECIPIENT"]);
-    \$message->setPlainBody("This is a test mail from your Nextcloud server. SMTP is working!");
-    
-    try {
-        \$mailer->send(\$message);
-        echo "\nTest mail sent successfully!\n";
-    } catch (Exception \$e) {
-        echo "\nError sending test mail: " . \$e->getMessage() . "\n";
-    }
-    
->>>>>>> d14fc32f931a3d50c4d9a08de3d87f14cb322b2e
-    echo "\nConfiguration appears to be valid.\n";
-    echo "To test the actual mail sending, please try to send a mail from the Nextcloud web interface.\n";
-    echo "You can test this by:\n";
-    echo "1. Going to your Nextcloud web interface\n";
+    echo "\nTo test the mail functionality, you can:\n";
+    echo "1. Go to your Nextcloud web interface\n";
     echo "2. Click on your profile picture in the top right\n";
     echo "3. Select 'Settings'\n";
     echo "4. Go to 'Sharing' or 'Notifications'\n";
     echo "5. Try to share a file or trigger a notification\n";
+    echo "\nThis will help verify if the SMTP configuration is working correctly.\n";
 } catch (Exception \$e) {
-    echo "Error testing configuration: " . \$e->getMessage() . "\n";
+    echo "Error checking configuration: " . \$e->getMessage() . "\n";
 }
 '
 EOF
-    fi
 fi
 
 echo
