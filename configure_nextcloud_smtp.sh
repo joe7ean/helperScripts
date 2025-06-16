@@ -42,6 +42,10 @@ if [[ -z "$YUNOHOST_DOMAIN" ]]; then
     exit 1
 fi
 
+# Extract domain without TLD for server name
+DOMAIN_WITHOUT_TLD=$(echo "$YUNOHOST_DOMAIN" | cut -d'.' -f1)
+SERVER_NAME="Nextcloud $DOMAIN_WITHOUT_TLD"
+
 # Input SMTP data
 echo -e "${YELLOW}Please enter your SMTP configuration:${NC}"
 echo
@@ -119,6 +123,11 @@ php occ config:system:set mail_smtppassword --value="$SMTP_PASSWORD"
 php occ config:system:set mail_smtpsecure --value="$SMTP_SECURITY"
 php occ config:system:set mail_from_address --value="$FROM_EMAIL"
 php occ config:system:set mail_domain --value="$MAIL_DOMAIN"
+php occ config:system:set mail_smtpauthtype --value="LOGIN"
+php occ config:system:set mail_smtpdebug --value="false" --type=boolean
+php occ config:system:set mail_smtptimeout --value="10" --type=integer
+php occ config:system:set mail_smtphelo --value="$SMTP_HOST"
+php occ config:system:set mail_from_name --value="$SERVER_NAME"
 EOF
 else
     yunohost app shell nextcloud << EOF
@@ -129,6 +138,11 @@ php occ config:system:set mail_smtpauth --value=false --type=boolean
 php occ config:system:set mail_smtpsecure --value="$SMTP_SECURITY"
 php occ config:system:set mail_from_address --value="$FROM_EMAIL"
 php occ config:system:set mail_domain --value="$MAIL_DOMAIN"
+php occ config:system:set mail_smtpauthtype --value="LOGIN"
+php occ config:system:set mail_smtpdebug --value="false" --type=boolean
+php occ config:system:set mail_smtptimeout --value="10" --type=integer
+php occ config:system:set mail_smtphelo --value="$SMTP_HOST"
+php occ config:system:set mail_from_name --value="$SERVER_NAME"
 EOF
 fi
 
